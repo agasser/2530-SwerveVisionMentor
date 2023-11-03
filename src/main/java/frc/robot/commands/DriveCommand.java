@@ -60,7 +60,7 @@ public class DriveCommand extends CommandBase {
 
     @Override
     public void execute() {
-        Translation2d xyRaw = new Translation2d(xbox.getLeftX(), xbox.getLeftY());
+        Translation2d xyRaw = new Translation2d(xbox.getLeftX(), -xbox.getLeftY());
         Translation2d xySpeed = DeadBand(xyRaw, 0.15);
         double zSpeed = DeadBand(xbox.getRightX(), 0.1);
         double xSpeed = xySpeed.getX(); // xbox.getLeftX();
