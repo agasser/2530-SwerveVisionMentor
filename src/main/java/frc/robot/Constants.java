@@ -29,9 +29,7 @@ public final class Constants {
     public static final double DRIVE_GEAR_RATIO = 1.d / 6.75d;
 
     public static final double DRIVE_ROTATION_TO_METER = DRIVE_GEAR_RATIO * Math.PI * WHEEL_DIAMETER;
-    public static final double STEER_ROTATION_TO_RADIANS = STEERING_GEAR_RATIO * Math.PI * 2d;
-    public static final double DRIVE_METERS_PER_MINUTE = DRIVE_ROTATION_TO_METER / 60d;
-    public static final double STEER_RADIANS_PER_MINUTE = STEER_ROTATION_TO_RADIANS / 60d;
+    public static final double DRIVE_METERS_PER_SECOND = DRIVE_ROTATION_TO_METER / 60d / 60d;
 
     // Actual drive gains
     // public static final double MODULE_KP = 0.5;

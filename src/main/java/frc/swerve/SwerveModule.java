@@ -1,20 +1,26 @@
 package frc.swerve;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.DrivetrainConstants;
 
 public class SwerveModule {
+    private static int moduleNumber = 0;
+    
     private final CANSparkMax driveMotor;
     private final CANSparkMax steerMotor;
 
@@ -23,16 +29,9 @@ public class SwerveModule {
 
     private final CANcoder absoluteEncoder;
 
-    private final double motorOffsetRadians;
-    private final boolean isAbsoluteEncoderReversed;
-    private final boolean motor_inv;
+    private final SparkMaxPIDController steerPID;
 
-    private final PIDController steerPID;
-
-    private static int moduleNumber = 0;
-    int thisModuleNumber;
-
-    SlewRateLimiter turnratelimiter = new SlewRateLimiter(4.d);
+    private int thisModuleNumber;
 
     public SwerveModule(int steerCanID, int driveCanID, int absoluteEncoderPort, double motorOffsetRadians,
             boolean isAbsoluteEncoderReversed, boolean motorReversed) {
@@ -43,23 +42,35 @@ public class SwerveModule {
         steerMotor.setIdleMode(IdleMode.kBrake);
         steerMotor.setInverted(false);
 
-        this.motor_inv = motorReversed;
         driveMotorEncoder = driveMotor.getEncoder();
         steerMotorEncoder = steerMotor.getEncoder();
 
         absoluteEncoder = new CANcoder(absoluteEncoderPort);
+        CANcoderConfiguration canCoderConfig = new CANcoderConfiguration();
+        // Set the CANCoder magnetic offset. This is the inverse of the ROTATIONS the sensor reads when the wheel is pointed straight forward.
+        canCoderConfig.MagnetSensor.MagnetOffset = Units.radiansToRotations(motorOffsetRadians);
+        // Set CANCoder to return direction from [-.5, .5) - straight forward should be 0
+        canCoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
+        // Set the CANCoder phase / direction
+        canCoderConfig.MagnetSensor.SensorDirection =
+            isAbsoluteEncoderReversed ? SensorDirectionValue.Clockwise_Positive : SensorDirectionValue.CounterClockwise_Positive;
 
-        this.motorOffsetRadians = motorOffsetRadians;
-        this.isAbsoluteEncoderReversed = isAbsoluteEncoderReversed;
+        absoluteEncoder.getConfigurator().apply(canCoderConfig);
 
+        // Drive distance in meters
         driveMotorEncoder.setPositionConversionFactor(DrivetrainConstants.DRIVE_ROTATION_TO_METER);
-        driveMotorEncoder.setVelocityConversionFactor(DrivetrainConstants.DRIVE_METERS_PER_MINUTE);
+        // Drive velocity in meters per second
+        driveMotorEncoder.setVelocityConversionFactor(DrivetrainConstants.DRIVE_METERS_PER_SECOND);
 
-        steerMotorEncoder.setPositionConversionFactor(DrivetrainConstants.STEER_ROTATION_TO_RADIANS);
-        steerMotorEncoder.setVelocityConversionFactor(DrivetrainConstants.STEER_RADIANS_PER_MINUTE);
+        // Steer position in rotations
+        steerMotorEncoder.setPositionConversionFactor(DrivetrainConstants.STEERING_GEAR_RATIO);
 
-        steerPID = new PIDController(DrivetrainConstants.MODULE_KP, 0, DrivetrainConstants.MODULE_KD);
-        steerPID.enableContinuousInput(-Math.PI, Math.PI);
+        steerPID = steerMotor.getPIDController();
+        steerPID.setP(DrivetrainConstants.MODULE_KP);
+        steerPID.setD(DrivetrainConstants.MODULE_KD);
+        steerPID.setPositionPIDWrappingEnabled(true);
+        steerPID.setPositionPIDWrappingMaxInput(0.5);
+        steerPID.setPositionPIDWrappingMinInput(-0.5);
 
         thisModuleNumber = moduleNumber;
         moduleNumber++;
@@ -83,15 +94,17 @@ public class SwerveModule {
         return steerMotorEncoder.getVelocity();
     }
 
-    public double getAbsoluteEncoderPosition() {
-        double angle = absoluteEncoder.getAbsolutePosition().getValue() * (Math.PI / 180.d);
-        angle -= motorOffsetRadians;
-        return angle * (isAbsoluteEncoderReversed ? -1.0 : 1.0);
+    /**
+     * Gets the absolute encoder (CANCoder) position
+     * @return position in rotations [0, 1)
+     */
+    private double getAbsoluteEncoderPosition() {
+        return absoluteEncoder.getAbsolutePosition().waitForUpdate(0.2).getValue();
     }
 
-    public void resetEncoders() {
+    private void resetEncoders() {
         driveMotorEncoder.setPosition(0);
-        steerMotorEncoder.setPosition(getAbsoluteEncoderPosition());
+        steerMotorEncoder.setPosition(Units.rotationsToRadians(getAbsoluteEncoderPosition()));
     }
 
     public SwerveModuleState getModuleState() {
@@ -105,9 +118,8 @@ public class SwerveModule {
     public void setModuleStateRaw(SwerveModuleState state) {
         state = SwerveModuleState.optimize(state, new Rotation2d(getSteerPosition()));
         double drive_command = state.speedMetersPerSecond / DrivetrainConstants.MAX_MODULE_VELOCITY;
-        driveMotor.set(drive_command * (motor_inv ? -1.0 : 1.0));
-
-        steerMotor.set(steerPID.calculate(getSteerPosition(), state.angle.getRadians()));
+        driveMotor.set(drive_command);
+        steerPID.setReference(state.angle.getRotations(), ControlType.kPosition);
 
         SmartDashboard.putNumber("Drive" + thisModuleNumber, drive_command);
     }
