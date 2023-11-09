@@ -1,11 +1,15 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.math.MathUtil.applyDeadband;
+import static edu.wpi.first.math.MathUtil.clamp;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.subsystems.DrivetrainSubsystem;
@@ -35,10 +39,6 @@ public class DriveCommand extends CommandBase {
         addRequirements(drivetrainSubsystem);
     }
 
-    double clamp(double v, double mi, double ma) {
-        return (v < mi) ? mi : (v > ma ? ma : v);
-    }
-
     public Translation2d DeadBand(Translation2d input, double deadzone) {
         double mag = input.getNorm();
         Translation2d norm = input.div(mag);
@@ -54,19 +54,15 @@ public class DriveCommand extends CommandBase {
         }
     }
 
-    public double DeadBand(double input, double deadband) {
-        return Math.abs(input) < deadband ? 0.0 : (input - Math.signum(input) * deadband) / (1.0 - deadband);
-    }
-
     @Override
     public void execute() {
-        Translation2d xyRaw = new Translation2d(xbox.getLeftX(), xbox.getLeftY());
+        Translation2d xyRaw = new Translation2d(-xbox.getLeftY(), -xbox.getLeftX());
         Translation2d xySpeed = DeadBand(xyRaw, 0.15);
-        double zSpeed = DeadBand(xbox.getRightX(), 0.1);
+        double zSpeed = applyDeadband(-xbox.getRightX(), 0.1);
         double xSpeed = xySpeed.getX(); // xbox.getLeftX();
         double ySpeed = xySpeed.getY(); // xbox.getLeftY();
 
-        System.out.println(xySpeed.getNorm());
+        SmartDashboard.putNumber("xySpeed norm", xySpeed.getNorm());
 
         // double mag_xy = Math.sqrt(xSpeed*xSpeed + ySpeed*ySpeed);
 
