@@ -82,7 +82,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     public Pose2d getPose() {
         Pose2d p = odometry.getPoseMeters();
         // - Y!!!
-        p = new Pose2d(p.getX(), -p.getY(), p.getRotation().div(-1).rotateBy(new Rotation2d(Math.PI / 2.0)));
+        p = new Pose2d(p.getX(), p.getY(), p.getRotation().rotateBy(new Rotation2d(Math.PI / 2.0)));
         return p;
     }
 
