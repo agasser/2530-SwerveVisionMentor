@@ -5,10 +5,11 @@
 package frc.robot;
 
 import frc.robot.Constants.ControllerConstants;
-import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.AprilTagFollowCommand;
 import frc.robot.commands.AutonomousCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.subsystems.LimelightSubsystem;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ public class RobotContainer {
   private final XboxController driverXbox = new XboxController(ControllerConstants.DRIVER_CONTROLLER_PORT);
 
   private final DrivetrainSubsystem drivetrainSubsystem = new DrivetrainSubsystem();
+  private final LimelightSubsystem limelightSubsystem = new LimelightSubsystem("limelight");
 
   private final DriveCommand normalDrive = new DriveCommand(drivetrainSubsystem, driverXbox);
 
@@ -61,7 +63,7 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-
+    //driverXbox.y().onTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem));
   }
 
   /**

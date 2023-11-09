@@ -4,7 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
@@ -92,4 +95,21 @@ public final class Constants {
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
   }
+
+  public static class LimelightConstants {
+    public static final String limeLightName = "NameHere";
+  }
+
+  public static class VisionConstants {
+
+    /**
+     * Physical location of the camera on the robot, relative to the center of the robot.
+     */
+    public static final Transform3d CAMERA_TO_ROBOT =
+        new Transform3d(new Translation3d(0, 0.0, 0), new Rotation3d());
+    public static final Transform3d ROBOT_TO_CAMERA = CAMERA_TO_ROBOT.inverse();
+     /** Height of the camers in meters */
+    public static final double CAMERA_HEIGHT = 0.165;
+  }
+
 }
