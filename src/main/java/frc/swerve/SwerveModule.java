@@ -1,9 +1,8 @@
 package frc.swerve;
 
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix.sensors.AbsoluteSensorRange;
+import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -27,7 +26,7 @@ public class SwerveModule {
     private final RelativeEncoder driveMotorEncoder;
     private final RelativeEncoder steerMotorEncoder;
 
-    private final CANcoder absoluteEncoder;
+    private final CANCoder absoluteEncoder;
 
     private final SparkMaxPIDController steerPID;
 
@@ -45,17 +44,15 @@ public class SwerveModule {
         driveMotorEncoder = driveMotor.getEncoder();
         steerMotorEncoder = steerMotor.getEncoder();
 
-        absoluteEncoder = new CANcoder(absoluteEncoderPort);
-        CANcoderConfiguration canCoderConfig = new CANcoderConfiguration();
+        absoluteEncoder = new CANCoder(absoluteEncoderPort);
+        CANCoderConfiguration canCoderConfig = new CANCoderConfiguration();
         // Set the CANCoder magnetic offset. This is the inverse of the ROTATIONS the sensor reads when the wheel is pointed straight forward.
-        canCoderConfig.MagnetSensor.MagnetOffset = Units.radiansToRotations(motorOffsetRadians);
+        canCoderConfig.magnetOffsetDegrees = Units.radiansToRotations(motorOffsetRadians);
         // Set CANCoder to return direction from [-.5, .5) - straight forward should be 0
-        canCoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
+        canCoderConfig.absoluteSensorRange = AbsoluteSensorRange.Signed_PlusMinus180;
         // Set the CANCoder phase / direction
-        canCoderConfig.MagnetSensor.SensorDirection =
-            isAbsoluteEncoderReversed ? SensorDirectionValue.Clockwise_Positive : SensorDirectionValue.CounterClockwise_Positive;
-
-        absoluteEncoder.getConfigurator().apply(canCoderConfig);
+        canCoderConfig.sensorDirection = isAbsoluteEncoderReversed;
+        absoluteEncoder.configAllSettings(canCoderConfig);
 
         // Drive distance in meters
         driveMotorEncoder.setPositionConversionFactor(DrivetrainConstants.DRIVE_ROTATION_TO_METER);
@@ -99,7 +96,7 @@ public class SwerveModule {
      * @return position in rotations [0, 1)
      */
     private double getAbsoluteEncoderPosition() {
-        return absoluteEncoder.getAbsolutePosition().waitForUpdate(0.2).getValue();
+        return absoluteEncoder.getAbsolutePosition();
     }
 
     private void resetEncoders() {
