@@ -18,29 +18,29 @@ import frc.robot.Constants.DrivetrainConstants;
 import frc.swerve.SwerveModule;
 
 public class DrivetrainSubsystem extends SubsystemBase {
-    SwerveModule frontLeft = new SwerveModule(DrivetrainConstants.FL_STEER_ID, DrivetrainConstants.FL_DRIVE_ID,
+    private final SwerveModule frontLeft = new SwerveModule(DrivetrainConstants.FL_STEER_ID, DrivetrainConstants.FL_DRIVE_ID,
             DrivetrainConstants.FL_ABSOLUTE_ENCODER_PORT, DrivetrainConstants.FL_OFFSET_RADIANS,
             DrivetrainConstants.FL_ABSOLUTE_ENCODER_REVERSED,
             DrivetrainConstants.FL_MOTOR_REVERSED);
 
-    SwerveModule frontRight = new SwerveModule(DrivetrainConstants.FR_STEER_ID, DrivetrainConstants.FR_DRIVE_ID,
+    private final SwerveModule frontRight = new SwerveModule(DrivetrainConstants.FR_STEER_ID, DrivetrainConstants.FR_DRIVE_ID,
             DrivetrainConstants.FR_ABSOLUTE_ENCODER_PORT, DrivetrainConstants.FR_OFFSET_RADIANS,
             DrivetrainConstants.FR_ABSOLUTE_ENCODER_REVERSED,
             DrivetrainConstants.FR_MOTOR_REVERSED);
 
-    SwerveModule backRight = new SwerveModule(DrivetrainConstants.BR_STEER_ID, DrivetrainConstants.BR_DRIVE_ID,
+    private final SwerveModule backRight = new SwerveModule(DrivetrainConstants.BR_STEER_ID, DrivetrainConstants.BR_DRIVE_ID,
             DrivetrainConstants.BR_ABSOLUTE_ENCODER_PORT, DrivetrainConstants.BR_OFFSET_RADIANS,
             DrivetrainConstants.BR_ABSOLUTE_ENCODER_REVERSED,
             DrivetrainConstants.BR_MOTOR_REVERSED);
 
-    SwerveModule backLeft = new SwerveModule(DrivetrainConstants.BL_STEER_ID, DrivetrainConstants.BL_DRIVE_ID,
+    private final SwerveModule backLeft = new SwerveModule(DrivetrainConstants.BL_STEER_ID, DrivetrainConstants.BL_DRIVE_ID,
             DrivetrainConstants.BL_ABSOLUTE_ENCODER_PORT, DrivetrainConstants.BL_OFFSET_RADIANS,
             DrivetrainConstants.BL_ABSOLUTE_ENCODER_REVERSED,
             DrivetrainConstants.BL_MOTOR_REVERSED);
 
     private final AHRS navX = new AHRS(SPI.Port.kMXP);
 
-    private Field2d field = new Field2d();
+    private final Field2d field = new Field2d();
 
     private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(DrivetrainConstants.KINEMATICS, getRotation2d(),
             getModulePositions());
@@ -60,7 +60,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         double rads = getPose().getRotation().getRadians(); 
-        odometry.update(geRotation2dOdometry(), getModulePositions());
+        odometry.update(getRotation2d(), getModulePositions());
         field.setRobotPose(getPose());
         SmartDashboard.putData("Field", field);
 
@@ -71,35 +71,35 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public void zeroHeading() {
+        // Reset pose to the same translation but rotation of 0
+        var pose = odometry.getPoseMeters();
+        var newPose = new Pose2d(pose.getTranslation(), new Rotation2d());
         navX.reset();
-    }
-
-    public void setHeading(double deg) {
-        zeroHeading();
-        navX.setAngleAdjustment(deg);
+        resetOdometry(newPose);
     }
 
     public Pose2d getPose() {
-        Pose2d p = odometry.getPoseMeters();
-        // - Y!!!
-        p = new Pose2d(p.getX(), p.getY(), p.getRotation().rotateBy(new Rotation2d(Math.PI / 2.0)));
-        return p;
+        return odometry.getPoseMeters();
     }
 
     public void resetOdometry(Pose2d pose) {
         odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
     }
 
+    /**
+     * Gets the robot heading.
+     * @return robot heading in radians [-Pi, Pi) with counter-clockwise positive
+     */
     public double getHeading() {
-        return Units.degreesToRadians(Math.IEEEremainder(navX.getAngle(), 360));
+        return -Units.degreesToRadians(Math.IEEEremainder(navX.getAngle(), 360d));
     }
 
+    /**
+     * Gets the robot heading.
+     * @return robot heading in radians [-Pi, Pi) with counter-clockwise positive
+     */
     public Rotation2d getRotation2d() {
         return new Rotation2d(getHeading());
-    }
-
-    public Rotation2d geRotation2dOdometry() {
-        return new Rotation2d(getHeading() + Math.PI / 2);
     }
 
     public void stopDrive() {
@@ -116,16 +116,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
         frontRight.setModuleState(states[1]);
         backLeft.setModuleState(states[2]);
         backRight.setModuleState(states[0]);
-    }
-
-    public void setChassisSpeedsAUTO(ChassisSpeeds speeds) {
-        double tmp = -speeds.vxMetersPerSecond;
-        speeds.vxMetersPerSecond = -speeds.vyMetersPerSecond;
-        speeds.vyMetersPerSecond = tmp; // FORWARDS
-        // SmartDashboard.putNumber("Radians Chassis CMD",
-        // speeds.omegaRadiansPerSecond);
-        SwerveModuleState[] states = DrivetrainConstants.KINEMATICS.toSwerveModuleStates(speeds);
-        setModules(states);
     }
 
     public void setXstance() {
