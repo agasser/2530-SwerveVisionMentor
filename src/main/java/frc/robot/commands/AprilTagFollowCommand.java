@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.limelight.LimelightFiducial;
@@ -27,6 +28,7 @@ public class AprilTagFollowCommand extends CommandBase {
     
     private final DrivetrainSubsystem drivetrainSubsystem;
     private final LimelightSubsystem limelightSubsystem;
+    private final ShuffleboardLayout visionLayout;
     private LimelightFiducial lastTarget;
 
 
@@ -36,10 +38,12 @@ public class AprilTagFollowCommand extends CommandBase {
 
     public AprilTagFollowCommand(
         DrivetrainSubsystem drivetrainSubsystem,
-        LimelightSubsystem limelightSubsystems) 
+        LimelightSubsystem limelightSubsystems,
+        ShuffleboardLayout visionLayout) 
     {
         this.drivetrainSubsystem = drivetrainSubsystem;
         this.limelightSubsystem = limelightSubsystems;
+        this.visionLayout = visionLayout;
         limelightHelperFunctions = new LimelightHelperFunctions();
 
         addRequirements(drivetrainSubsystem);
@@ -55,25 +59,26 @@ public class AprilTagFollowCommand extends CommandBase {
   public void execute() {
     // If the target is visible, get the new translation. If the target isn't visible we'll use the last known translation.
     var firstTarget = LimelightHelperFunctions.getLatestFiducialTarget(LimelightConstants.limeLightName, "16H5C", TAG_TO_CHASE);
+    //System.out.println("I am inside april tag command execute");
     if(firstTarget.isPresent()){
          // This is new target data, so recalculate the goal
          lastTarget = firstTarget.get();
-
-         var robotPose = LimelightHelperFunctions.getBotPose3d(LimelightConstants.limeLightName);
+         visionLayout.add("targetXDegrees", lastTarget.targetXDegrees);
+         //var robotPose = LimelightHelperFunctions.getBotPose3d(LimelightConstants.limeLightName);
             
          // Transform the robot's pose to find the camera's pose
-         var cameraPose = LimelightHelperFunctions.getTargetPose3d_CameraSpace(LimelightConstants.limeLightName);
+         //var cameraPose = LimelightHelperFunctions.getTargetPose3d_CameraSpace(LimelightConstants.limeLightName);
  
          // Trasnform the camera's pose to the target's pose
-         var targetPose = LimelightHelperFunctions.getBotPose3d_TargetSpace(LimelightConstants.limeLightName);
+         //var targetPose = LimelightHelperFunctions.getBotPose3d_TargetSpace(LimelightConstants.limeLightName);
          
          // Transform the tag's pose to set our goal
-         var goalPose = targetPose.transformBy(TAG_TO_GOAL).toPose2d();
+         //var goalPose = targetPose.transformBy(TAG_TO_GOAL).toPose2d();
  
          // Drive
-         xController.setGoal(goalPose.getX());
-         yController.setGoal(goalPose.getY());
-         omegaController.setGoal(goalPose.getRotation().getRadians());
+         //xController.setGoal(goalPose.getX());
+         //yController.setGoal(goalPose.getY());
+         //omegaController.setGoal(goalPose.getRotation().getRadians());
          //swerveSubsystem.drive(lastTarget.targetXDegrees, lastTarget.targetYDegrees, omegaSpeed, true);
     }
   }

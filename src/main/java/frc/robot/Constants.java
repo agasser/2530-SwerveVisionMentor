@@ -97,7 +97,7 @@ public final class Constants {
   }
 
   public static class LimelightConstants {
-    public static final String limeLightName = "NameHere";
+    public static final String limeLightName = "limelight";
   }
 
   public static class VisionConstants {

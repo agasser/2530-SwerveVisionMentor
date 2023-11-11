@@ -413,13 +413,13 @@ public class LimelightHelperFunctions {
     public static LimelightResults getLatestResults(String limelightName) {
 
         long start = System.nanoTime();
-        LimelightResults results = new LimelightResults();
+        LimelightResultsMapper resultsMapper = new LimelightResultsMapper();
         if (mapper == null) {
             mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
 
         try {
-            results = mapper.readValue(getJSONDump(limelightName), LimelightResults.class);
+            resultsMapper = mapper.readValue(getJSONDump(limelightName), LimelightResultsMapper.class);
         } catch (JsonProcessingException e) {
             System.err.println("lljson error: " + e.getMessage());
         }
@@ -430,7 +430,7 @@ public class LimelightHelperFunctions {
             System.out.printf("lljson: %.2f\r\n", millis);
         }
 
-        return results;
+        return resultsMapper.targetingResults;
     }
 
     public static Optional<LimelightRetro> getLatestRetroTarget(String limeLightName) {

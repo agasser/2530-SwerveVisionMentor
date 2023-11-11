@@ -10,19 +10,13 @@ import frc.robot.commands.AprilTagFollowCommand;
 import frc.robot.commands.AutonomousCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.LimelightSubsystem;
-
-import java.util.HashMap;
-import java.util.List;
-
-import com.pathplanner.lib.path.PathConstraints;
-
-import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import static edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts.kGrid;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -31,13 +25,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-  private final XboxController driverXbox = new XboxController(ControllerConstants.DRIVER_CONTROLLER_PORT);
-
+  private final CommandXboxController driverXbox = new CommandXboxController(ControllerConstants.DRIVER_CONTROLLER_PORT);
   private final DrivetrainSubsystem drivetrainSubsystem = new DrivetrainSubsystem();
   private final LimelightSubsystem limelightSubsystem = new LimelightSubsystem("limelight");
-
-  private final DriveCommand normalDrive = new DriveCommand(drivetrainSubsystem, driverXbox);
-
+  private final DriveCommand normalDrive = new DriveCommand(drivetrainSubsystem, driverXbox.getHID());
+  final ShuffleboardTab visionTab = Shuffleboard.getTab("Vision");
+  final ShuffleboardLayout visionLayout = visionTab.getLayout("Target", kGrid).withPosition(6, 0).withSize(1, 2);
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -63,7 +56,7 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    //driverXbox.y().onTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem));
+    driverXbox.y().onTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
   }
 
   /**
