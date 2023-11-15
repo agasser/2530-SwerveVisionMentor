@@ -2,6 +2,7 @@ package frc.robot.commands;
 import static edu.wpi.first.math.MathUtil.clamp;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -13,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.limelight.LimelightFiducial;
+import frc.robot.limelight.LimelightHelpers;
+import frc.robot.limelight.LimelightResults;
 import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.DrivetrainSubsystem;
 
@@ -63,33 +66,27 @@ public class AprilTagFollowCommand extends CommandBase {
   @Override
   public void execute() {
     // If the target is visible, get the new translation. If the target isn't visible we'll use the last known translation.
-    var firstTarget = limelightSubsystem.getLatestFiducialTarget(LimelightConstants.limeLightName, "16H5C", TAG_TO_CHASE);
-    //System.out.println("I am inside april tag command execute");
-    if(firstTarget.isPresent()){
-      // This is new target data, so recalculate the goal
-      lastTarget = firstTarget.get();
-      visionLayout.add("Target X", lastTarget.targetXPixels);
-      visionLayout.add("Target Y", lastTarget.targetXPixels);
-      visionLayout.add("Target Rotation X", lastTarget.targetXDegrees);
-      visionLayout.add("Target Rotation Y", lastTarget.targetYDegrees);
-      double targetOffsetAngle_Vertical = lastTarget.targetYDegrees;
-      double angleToGoalDegrees = LimelightConstants.limelightMountAngleDegrees + targetOffsetAngle_Vertical; //(a2)
-      double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0); //
-      double distanceFromLimelightToGoalInches = (LimelightConstants.aprilTagGoalHeightInches - LimelightConstants.limelightLensHeightInches)/Math.tan(angleToGoalRadians);
+    LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults((LimelightConstants.limeLightName));
+   //System.out.println("I am inside april tag command execute");
+    if(results.targetingResults.valid){
+      Pose3d pose = results.targetingResults.targets_Fiducials[0].getCameraPose_TargetSpace();
+      visionLayout.add("Target X", pose.getX());
+      visionLayout.add("Target Y", pose.getY());
+      visionLayout.add("Target Z", pose.getZ());
       
-      var xSpeed = pidControllerX.calculate(distanceFromLimelightToGoalInches);
+      var xSpeed = pidControllerX.calculate(pose.getX());
       if (pidControllerX.atSetpoint()) {
         xSpeed = 0;
       }
 
          // Handle alignment side-to-side
-      var ySpeed = pidControllerY.calculate(lastTarget.targetYDegrees);
+      var ySpeed = pidControllerY.calculate(pose.getY());
       if (pidControllerY.atSetpoint()) {
         ySpeed = 0;
       }
 
       // Handle rotation using target Yaw/Z rotation
-      var omegaSpeed = pidControllerOmega.calculate(angleToGoalRadians);
+      var omegaSpeed = pidControllerOmega.calculate(pose.getZ());
       if (pidControllerOmega.atSetpoint()) {
         omegaSpeed = 0;
       }
