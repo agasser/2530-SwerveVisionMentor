@@ -52,9 +52,9 @@ public class AprilTagFollowCommand extends CommandBase {
     pidControllerX.setTolerance(Units.inchesToMeters(2.5));
 
     pidControllerY.setSetpoint(0); // Move side to side to keep target centered
-    pidControllerX.setTolerance(Units.inchesToMeters(2.5));
+    pidControllerY.setTolerance(Units.inchesToMeters(2.5));
 
-    pidControllerOmega.setSetpoint(Units.degreesToRadians(-90)); // Rotate the keep perpendicular with the target
+    pidControllerOmega.setSetpoint(Units.degreesToRadians(180)); // Rotate the keep perpendicular with the target
     pidControllerOmega.setTolerance(Units.degreesToRadians(1));
 
   }

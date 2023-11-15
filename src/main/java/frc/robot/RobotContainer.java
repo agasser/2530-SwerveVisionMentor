@@ -6,8 +6,6 @@ package frc.robot;
 
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.LockCommand;
-import frc.robot.commands.ResetOdometryCommand;
 import frc.robot.commands.ZeroHeadingCommand;
 import frc.robot.commands.AprilTagFollowCommand;
 import frc.robot.commands.AutonomousCommand;
@@ -17,9 +15,12 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts.kGrid;
+
+import edu.wpi.first.math.geometry.Pose2d;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -59,10 +60,10 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    driverXbox.y().onTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
+    driverXbox.y().whileTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
     driverXbox.x().onTrue(new ZeroHeadingCommand(drivetrainSubsystem));
-    driverXbox.a().onTrue(new ResetOdometryCommand(drivetrainSubsystem));
-    driverXbox.b().onTrue(new LockCommand(drivetrainSubsystem));
+    driverXbox.a().onTrue(Commands.runOnce(() -> drivetrainSubsystem.resetOdometry(new Pose2d()), drivetrainSubsystem));
+    driverXbox.b().whileTrue(Commands.run(drivetrainSubsystem::setXstance, drivetrainSubsystem));
   }
 
   /**
