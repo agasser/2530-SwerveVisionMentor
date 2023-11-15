@@ -23,13 +23,6 @@ public class DriveCommand extends CommandBase {
     private double DRIVE_MULT = 1.0;
     private final double SLOWMODE_MULT = 0.25;
 
-    private enum DriveState {
-        Free,
-        Locked
-    };
-
-    private DriveState state = DriveState.Free;
-
     public DriveCommand(DrivetrainSubsystem drivetrainSubsystem, XboxController xbox) {
         this.drivetrainSubsystem = drivetrainSubsystem;
         this.xbox = xbox;
@@ -83,12 +76,6 @@ public class DriveCommand extends CommandBase {
         ySpeed *= dmult;
         zSpeed *= dmult;
 
-        if (xbox.getXButton())
-            drivetrainSubsystem.zeroHeading();
-
-        if (xbox.getAButton())
-            drivetrainSubsystem.resetOdometry(new Pose2d());
-
         ChassisSpeeds speeds;
 
         // Drive Non Field Oriented
@@ -98,26 +85,11 @@ public class DriveCommand extends CommandBase {
             speeds = new ChassisSpeeds(xSpeed, ySpeed, zSpeed);
         }
 
-        // State transition logic
-        switch (state) {
-            case Free:
-                state = xbox.getBButton() ? DriveState.Locked : DriveState.Free;
-                break;
-            case Locked:
-                state = ((xyRaw.getNorm() > 0.15) && !xbox.getBButton()) ? DriveState.Free : DriveState.Locked;
-                break;
+        if((xyRaw.getNorm() > 0.15)){
+            SwerveModuleState[] calculatedModuleStates = DrivetrainConstants.KINEMATICS.toSwerveModuleStates(speeds);
+            drivetrainSubsystem.setModules(calculatedModuleStates);
         }
-
-        // Drive execution logic
-        switch (state) {
-            case Free:
-                SwerveModuleState[] calculatedModuleStates = DrivetrainConstants.KINEMATICS.toSwerveModuleStates(speeds);
-                drivetrainSubsystem.setModules(calculatedModuleStates);
-                break;
-            case Locked:
-                drivetrainSubsystem.setXstance();
-                break;
-        }
+        
     }
 
     @Override

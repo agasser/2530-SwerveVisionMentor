@@ -6,6 +6,9 @@ package frc.robot;
 
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.LockCommand;
+import frc.robot.commands.ResetOdometryCommand;
+import frc.robot.commands.ZeroHeadingCommand;
 import frc.robot.commands.AprilTagFollowCommand;
 import frc.robot.commands.AutonomousCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
@@ -57,6 +60,9 @@ public class RobotContainer {
    */
   private void configureBindings() {
     driverXbox.y().onTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
+    driverXbox.x().onTrue(new ZeroHeadingCommand(drivetrainSubsystem));
+    driverXbox.a().onTrue(new ResetOdometryCommand(drivetrainSubsystem));
+    driverXbox.b().onTrue(new LockCommand(drivetrainSubsystem));
   }
 
   /**
