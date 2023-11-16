@@ -69,7 +69,7 @@ public class AprilTagFollowCommand extends CommandBase {
     LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults((LimelightConstants.limeLightName));
    //System.out.println("I am inside april tag command execute");
     if(results.targetingResults.valid){
-      Pose3d pose = results.targetingResults.targets_Fiducials[0].getCameraPose_TargetSpace();
+      Pose3d pose = results.targetingResults.targets_Fiducials[0].getTargetPose_RobotSpace();
       visionLayout.add("Target X", pose.getX());
       visionLayout.add("Target Y", pose.getY());
       visionLayout.add("Target Z", pose.getZ());
