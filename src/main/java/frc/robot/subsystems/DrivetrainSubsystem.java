@@ -126,9 +126,11 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public ChassisSpeeds getChassisSpeeds() {
-        ChassisSpeeds speeds = DrivetrainConstants.KINEMATICS.toChassisSpeeds(frontLeft.getModuleState(),
-                frontRight.getModuleState(),
-                backLeft.getModuleState(), backRight.getModuleState());
+        ChassisSpeeds speeds = DrivetrainConstants.KINEMATICS.toChassisSpeeds(
+            backRight.getModuleState(),
+            frontRight.getModuleState(),
+            backLeft.getModuleState(),
+            frontLeft.getModuleState());
 
         return speeds;
     }
