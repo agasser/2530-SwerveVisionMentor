@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts.kGrid;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -62,7 +63,7 @@ public class RobotContainer {
   private void configureBindings() {
     driverXbox.y().whileTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
     driverXbox.x().onTrue(new ZeroHeadingCommand(drivetrainSubsystem));
-    driverXbox.a().onTrue(Commands.runOnce(() -> drivetrainSubsystem.resetOdometry(new Pose2d()), drivetrainSubsystem));
+    driverXbox.a().onTrue(Commands.runOnce(() -> drivetrainSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d())), drivetrainSubsystem));
     driverXbox.b().whileTrue(Commands.run(drivetrainSubsystem::setXstance, drivetrainSubsystem));
   }
 

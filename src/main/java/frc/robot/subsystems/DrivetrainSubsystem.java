@@ -84,6 +84,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     public void resetOdometry(Pose2d pose) {
         odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+        frontLeft.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(0)));
+        frontRight.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(0)));
+        backLeft.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(0)));
+        backRight.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(0)));
     }
 
     /**
