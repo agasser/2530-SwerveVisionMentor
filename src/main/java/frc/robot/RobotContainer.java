@@ -63,7 +63,7 @@ public class RobotContainer {
   private void configureBindings() {
     driverXbox.y().whileTrue(new AprilTagFollowCommand(drivetrainSubsystem, limelightSubsystem, visionLayout));
     driverXbox.x().onTrue(new ZeroHeadingCommand(drivetrainSubsystem));
-    driverXbox.a().onTrue(Commands.runOnce(() -> drivetrainSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d())), drivetrainSubsystem));
+    driverXbox.a().onTrue(Commands.runOnce(() -> drivetrainSubsystem.resetOdometry(new Pose2d()), drivetrainSubsystem));
     driverXbox.b().whileTrue(Commands.run(drivetrainSubsystem::setXstance, drivetrainSubsystem));
   }
 

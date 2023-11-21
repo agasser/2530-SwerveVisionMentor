@@ -116,10 +116,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
     public void setModules(SwerveModuleState[] states) {
         // Normalize speeds so they are all obtainable
         SwerveDriveKinematics.desaturateWheelSpeeds(states, DrivetrainConstants.MAX_MODULE_VELOCITY);
-        backRight.setModuleState(states[0]);
-        frontRight.setModuleState(states[1]);
-        backLeft.setModuleState(states[2]);
-        frontLeft.setModuleState(states[3]);
     }
 
     public void setXstance() {
