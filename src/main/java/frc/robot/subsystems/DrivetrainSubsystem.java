@@ -84,6 +84,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     public void resetOdometry(Pose2d pose) {
         odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+    }
 
     /**
      * Gets the robot heading.
