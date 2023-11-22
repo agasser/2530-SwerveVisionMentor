@@ -68,7 +68,7 @@ public class AprilTagFollowCommand extends CommandBase {
     // If the target is visible, get the new translation. If the target isn't visible we'll use the last known translation.
     LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults((LimelightConstants.limeLightName));
    //System.out.println("I am inside april tag command execute");
-    if(results.targetingResults.valid){
+    if(results.targetingResults.targets_Fiducials.length > 0){
       Pose3d pose = results.targetingResults.targets_Fiducials[0].getTargetPose_RobotSpace();
       visionLayout.add("Target X", pose.getX());
       visionLayout.add("Target Y", pose.getY());
