@@ -132,7 +132,7 @@ public class DriveToPoseCommand extends CommandBase {
     //if (!xbox.getLeftBumper()) {
         speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omegaSpeed, swerveSubsystem.getRotation2d());
     //} else {
-        speeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
+    //    speeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
     //}
 
     SwerveModuleState[] calculatedModuleStates = DriveConstants.KINEMATICS.toSwerveModuleStates(speeds);

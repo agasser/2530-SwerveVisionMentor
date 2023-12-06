@@ -93,7 +93,7 @@ public class RobotContainer {
   private void configureBindings() {
     driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout, driverXbox.getHID()));
     driverXbox.x().onTrue(Commands.runOnce(() -> zeroHeading()));
-    driverXbox.a().onTrue(Commands.runOnce(() -> poseEstimator.resetPosition(swerveDriveSubsystem.getRotation2d(), swerveDriveSubsystem.getModulePositions(), new Pose2d()), swerveDriveSubsystem));
+    driverXbox.a().onTrue(Commands.runOnce(() -> poseEstimator.setCurrentPose(new Pose2d()), swerveDriveSubsystem));
     driverXbox.b().whileTrue(Commands.run(swerveDriveSubsystem::setXstance, swerveDriveSubsystem));
     driverXbox.rightBumper().whileTrue(new DriveToPoseCommand(
       swerveDriveSubsystem, 
@@ -196,7 +196,7 @@ public class RobotContainer {
     var pose = poseEstimator.getCurrentPose();
     var newPose = new Pose2d(pose.getTranslation(), new Rotation2d());
     swerveDriveSubsystem.navXReset();
-    poseEstimator.resetPosition(swerveDriveSubsystem.getRotation2d(), swerveDriveSubsystem.getModulePositions(), pose);
+    poseEstimator.setCurrentPose(newPose);
 }
 
 
@@ -228,7 +228,7 @@ public class RobotContainer {
           if (isFirstPath) {
             zeroHeading();
             Pose2d initpose = traj.getInitialHolonomicPose();
-            poseEstimator.resetPosition(initpose.getRotation(), swerveDriveSubsystem.getModulePositions(), initpose);
+            poseEstimator.setCurrentPose(initpose);
           }
         }),
 
