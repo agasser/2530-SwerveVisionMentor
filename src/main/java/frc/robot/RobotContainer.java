@@ -4,54 +4,43 @@
 
 package frc.robot;
 
+import static edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts.kGrid;
+
+import java.util.HashMap;
+import java.util.List;
+
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.FollowPathWithEvents;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
+
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.SwerveModuleConstants;
 import frc.robot.commands.ChaseAprilTagCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.DriveToPoseCommand;
 import frc.robot.commands.OperatorCommand;
 import frc.robot.commands.ZeroHeadingCommand;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Intake.IntakeState;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
-import frc.robot.subsystems.Intake.IntakeState;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.constraint.MecanumDriveKinematicsConstraint;
-import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import edu.wpi.first.wpilibj2.command.button.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.function.BooleanSupplier;
-
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.PathPoint;
-import com.pathplanner.lib.commands.FollowPathWithEvents;
-import com.pathplanner.lib.commands.PPSwerveControllerCommand;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import static edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts.kGrid;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -107,13 +96,11 @@ public class RobotContainer {
     driverXbox.x().onTrue(new ZeroHeadingCommand(swerveDriveSubsystem));
     driverXbox.a().onTrue(Commands.runOnce(() -> swerveDriveSubsystem.resetOdometry(new Pose2d()), swerveDriveSubsystem));
     driverXbox.b().whileTrue(Commands.run(swerveDriveSubsystem::setXstance, swerveDriveSubsystem));
-    //need help here
-    // operatorXbox.whileTrue(new DriveToPoseCommand(
-    //   swerveDriveSubsystem, 
-    //   PoseEstimatorSubsystem::getCurrentPose, 
-    //   driverXbox.getHID(), 
-    //   , 
-    //   true));
+    driverXbox.rightBumper().whileTrue(new DriveToPoseCommand(
+      swerveDriveSubsystem, 
+      poseEstimator::getCurrentPose, 
+      new Pose2d(14.22, 7.0, Rotation2d.fromDegrees(90)), // Replace with your pose
+      true));
   }
 
   /**

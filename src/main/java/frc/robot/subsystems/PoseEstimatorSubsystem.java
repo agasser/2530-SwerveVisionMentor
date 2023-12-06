@@ -16,7 +16,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -105,6 +104,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // Update pose estimator with drivetrain sensors
+    poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
+
     var poseEntry = LimelightHelpers.getLimelightNTTableEntry("limelight", "botpose_wpiblue");
     var poseArray = poseEntry.getDoubleArray(new double[0]);
     var timestamp = poseEntry.getLastChange() / 1e6 - poseArray[6] / 1e3;
