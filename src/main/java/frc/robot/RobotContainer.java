@@ -36,7 +36,6 @@ import frc.robot.commands.ChaseAprilTagCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.DriveToPoseCommand;
 import frc.robot.commands.OperatorCommand;
-import frc.robot.commands.ZeroHeadingCommand;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Intake.IntakeState;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
@@ -93,8 +92,8 @@ public class RobotContainer {
    */
   private void configureBindings() {
     driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout, driverXbox.getHID()));
-    driverXbox.x().onTrue(new ZeroHeadingCommand(swerveDriveSubsystem));
-    driverXbox.a().onTrue(Commands.runOnce(() -> swerveDriveSubsystem.resetOdometry(new Pose2d()), swerveDriveSubsystem));
+    driverXbox.x().onTrue(Commands.runOnce(() -> zeroHeading()));
+    driverXbox.a().onTrue(Commands.runOnce(() -> poseEstimator.resetPosition(swerveDriveSubsystem.getRotation2d(), swerveDriveSubsystem.getModulePositions(), new Pose2d()), swerveDriveSubsystem));
     driverXbox.b().whileTrue(Commands.run(swerveDriveSubsystem::setXstance, swerveDriveSubsystem));
     driverXbox.rightBumper().whileTrue(new DriveToPoseCommand(
       swerveDriveSubsystem, 
@@ -192,13 +191,22 @@ public class RobotContainer {
     return auton;
   }
 
+  public void zeroHeading() {
+    // Reset pose to the same translation but rotation of 0
+    var pose = poseEstimator.getCurrentPose();
+    var newPose = new Pose2d(pose.getTranslation(), new Rotation2d());
+    swerveDriveSubsystem.navXReset();
+    poseEstimator.resetPosition(swerveDriveSubsystem.getRotation2d(), swerveDriveSubsystem.getModulePositions(), pose);
+}
+
+
   // Assuming this method is part of a drivetrain subsystem that provides the
   // necessary methods
   public Command followTrajectoryCommand(PathPlannerTrajectory traj, boolean isFirstPath,
       HashMap<String, Command> eventMap) {
       Command swerveController = new PPSwerveControllerCommand(
             traj,
-            swerveDriveSubsystem::getPose, // Pose supplier
+            poseEstimator::getCurrentPose, // Pose supplier
             new PIDController(
                 3.0,
                 0,
@@ -218,10 +226,9 @@ public class RobotContainer {
         new InstantCommand(() -> {
           // Reset odometry for the first path you run during auto
           if (isFirstPath) {
-            swerveDriveSubsystem.zeroHeading();
+            zeroHeading();
             Pose2d initpose = traj.getInitialHolonomicPose();
-            swerveDriveSubsystem.resetOdometry(
-                new Pose2d(new Translation2d(initpose.getX(), -initpose.getY()), initpose.getRotation()));
+            poseEstimator.resetPosition(initpose.getRotation(), swerveDriveSubsystem.getModulePositions(), initpose);
           }
         }),
 

@@ -34,14 +34,8 @@ public class SwerveSubsystem extends SubsystemBase {
         SwerveModuleConstants.BL_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.BL_STEER_MOTOR_REVERSED);
 
     private final AHRS navX = new AHRS(SPI.Port.kMXP);
-
-    private final Field2d field = new Field2d();
-
-    private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(DriveConstants.KINEMATICS, getRotation2d(),
-            getModulePositions());
-
+    
     public SwerveSubsystem() {
-        zeroHeading();
         // new Thread(() -> {
         // try {
         // Thread.sleep(1000);
@@ -54,32 +48,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        double rads = getPose().getRotation().getRadians(); 
-        odometry.update(getRotation2d(), getModulePositions());
-        field.setRobotPose(getPose());
-        SmartDashboard.putData("Field", field);
-
-        SmartDashboard.putString("Robot Pose",
-                getPose().toString());
-
-        SmartDashboard.putNumber("Spin Velocity", (getPose().getRotation().getRadians() - rads) / 0.02);
     }
 
-    public void zeroHeading() {
-        // Reset pose to the same translation but rotation of 0
-        var pose = odometry.getPoseMeters();
-        var newPose = new Pose2d(pose.getTranslation(), new Rotation2d());
-        navX.reset();
-        resetOdometry(newPose);
-    }
-
-    public Pose2d getPose() {
-        return odometry.getPoseMeters();
-    }
-
-    public void resetOdometry(Pose2d pose) {
-        odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
-    }
 
     /**
      * Gets the robot heading.
@@ -95,6 +65,10 @@ public class SwerveSubsystem extends SubsystemBase {
      */
     public Rotation2d getRotation2d() {
         return new Rotation2d(getHeading());
+    }
+
+    public void navXReset () {
+        navX.reset();
     }
 
     public void stopDrive() {

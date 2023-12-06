@@ -157,6 +157,14 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
   }
 
   /**
+   * Resets the position on the field to 0,0 0-degrees, with forward being downfield. This resets
+   * what "forward" is for field oriented driving.
+   */
+  public void resetPosition(Rotation2d gyroAngle, SwerveModulePosition[] modulePositions, Pose2d poseMeters) {
+    resetPosition(gyroAngle, modulePositions, poseMeters);
+  }
+
+  /**
    * Transforms a pose to the opposite alliance's coordinate system. (0,0) is always on the right corner of your
    * alliance wall, so for 2023, the field elements are at different coordinates for each alliance.
    * @param poseToFlip pose to transform to the other alliance
