@@ -1,21 +1,22 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.math.MathUtil.applyDeadband;
-import static edu.wpi.first.math.MathUtil.clamp;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.Constants.DrivetrainConstants;
-import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.SwerveModuleConstants;
+import frc.robot.subsystems.SwerveSubsystem;
 
 public class DriveCommand extends CommandBase {
-    private final DrivetrainSubsystem drivetrainSubsystem;
+    private final SwerveSubsystem swerveSubsystem;
     private final XboxController xbox;
 
     private SlewRateLimiter dsratelimiter = new SlewRateLimiter(4);
@@ -23,13 +24,24 @@ public class DriveCommand extends CommandBase {
     private double DRIVE_MULT = 1.0;
     private final double SLOWMODE_MULT = 0.25;
 
-    public DriveCommand(DrivetrainSubsystem drivetrainSubsystem, XboxController xbox) {
-        this.drivetrainSubsystem = drivetrainSubsystem;
+    private enum DriveState {
+        Free,
+        Locked
+    };
+
+    private DriveState state = DriveState.Free;
+
+    public DriveCommand(SwerveSubsystem swerveSubsystem, XboxController xbox) {
+        this.swerveSubsystem = swerveSubsystem;
         this.xbox = xbox;
 
         dsratelimiter.reset(SLOWMODE_MULT);
 
-        addRequirements(drivetrainSubsystem);
+        addRequirements(swerveSubsystem);
+    }
+
+    double clamp(double v, double mi, double ma) {
+        return (v < mi) ? mi : (v > ma ? ma : v);
     }
 
     public Translation2d DeadBand(Translation2d input, double deadzone) {
@@ -45,6 +57,10 @@ public class DriveCommand extends CommandBase {
                     clamp(result.getX(), -1.0, 1.0),
                     clamp(result.getY(), -1.0, 1.0));
         }
+    }
+
+    public double DeadBand(double input, double deadband) {
+        return Math.abs(input) < deadband ? 0.0 : (input - Math.signum(input) * deadband) / (1.0 - deadband);
     }
 
     @Override
@@ -64,9 +80,9 @@ public class DriveCommand extends CommandBase {
         // zSpeed = Math.abs(zSpeed) > 0.15 ? zSpeed : 0.0;
 
         // TODO: Full speed!
-        xSpeed *= DrivetrainConstants.XY_SPEED_LIMIT * DrivetrainConstants.MAX_ROBOT_VELOCITY;
-        ySpeed *= DrivetrainConstants.XY_SPEED_LIMIT * DrivetrainConstants.MAX_ROBOT_VELOCITY;
-        zSpeed *= DrivetrainConstants.Z_SPEED_LIMIT * DrivetrainConstants.MAX_ROBOT_RAD_VELOCITY;
+        xSpeed *= DriveConstants.XY_SPEED_LIMIT * DriveConstants.MAX_ROBOT_VELOCITY;
+        ySpeed *= DriveConstants.XY_SPEED_LIMIT * DriveConstants.MAX_ROBOT_VELOCITY;
+        zSpeed *= DriveConstants.Z_SPEED_LIMIT * DriveConstants.MAX_ROBOT_RAD_VELOCITY;
 
         // double dmult = dsratelimiter.calculate(xbox.getRightBumper() ? 1.0 :
         // SLOWMODE_MULT);
@@ -75,26 +91,41 @@ public class DriveCommand extends CommandBase {
         xSpeed *= dmult;
         ySpeed *= dmult;
         zSpeed *= dmult;
-
+        
         ChassisSpeeds speeds;
 
         // Drive Non Field Oriented
         if (!xbox.getLeftBumper()) {
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, zSpeed, drivetrainSubsystem.getRotation2d());
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, zSpeed, swerveSubsystem.getRotation2d());
         } else {
             speeds = new ChassisSpeeds(xSpeed, ySpeed, zSpeed);
         }
 
-        if((xyRaw.getNorm() > 0.15)){
-            SwerveModuleState[] calculatedModuleStates = DrivetrainConstants.KINEMATICS.toSwerveModuleStates(speeds);
-            drivetrainSubsystem.setModules(calculatedModuleStates);
+        // State transition logic
+        switch (state) {
+            case Free:
+                state = xbox.getBButton() ? DriveState.Locked : DriveState.Free;
+                break;
+            case Locked:
+                state = ((xyRaw.getNorm() > 0.15) && !xbox.getBButton()) ? DriveState.Free : DriveState.Locked;
+                break;
         }
-        
+
+        // Drive execution logic
+        switch (state) {
+            case Free:
+                SwerveModuleState[] calculatedModuleStates = DriveConstants.KINEMATICS.toSwerveModuleStates(speeds);
+                swerveSubsystem.setModules(calculatedModuleStates);
+                break;
+            case Locked:
+                swerveSubsystem.setXstance();
+                break;
+        }
     }
 
     @Override
     public void end(boolean interrupted) {
-        drivetrainSubsystem.stopDrive();
+        swerveSubsystem.stopDrive();
     }
 
     @Override
@@ -102,4 +133,3 @@ public class DriveCommand extends CommandBase {
         return false;
     }
 }
-

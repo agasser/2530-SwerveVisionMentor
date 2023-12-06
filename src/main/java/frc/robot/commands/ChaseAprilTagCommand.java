@@ -1,47 +1,48 @@
 package frc.robot.commands;
-import static edu.wpi.first.math.MathUtil.clamp;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.Constants.DrivetrainConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.LimelightConstants;
-import frc.robot.limelight.LimelightFiducial;
 import frc.robot.limelight.LimelightHelpers;
-import frc.robot.limelight.LimelightResults;
-import frc.robot.subsystems.LimelightSubsystem;
-import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.subsystems.SwerveSubsystem;
+import static edu.wpi.first.math.MathUtil.clamp;
 
-public class AprilTagFollowCommand extends CommandBase {
-
-    private static final int TAG_TO_CHASE = 1;
+public class ChaseAprilTagCommand extends CommandBase {
     
-    private final DrivetrainSubsystem drivetrainSubsystem;
-    private final LimelightSubsystem limelightSubsystem;
+    private final SwerveSubsystem swerveSubsystem;
     private final ShuffleboardLayout visionLayout;
-    private LimelightFiducial lastTarget;
+    private final XboxController xbox;
 
     private final PIDController pidControllerX = new PIDController(1, 0, 0);
     private final PIDController pidControllerY = new PIDController(1.5, 0, 0);
     private final PIDController pidControllerOmega = new PIDController(.5, 0, 0);
 
-    public AprilTagFollowCommand(
-        DrivetrainSubsystem drivetrainSubsystem,
-        LimelightSubsystem limelightSubsystems,
-        ShuffleboardLayout visionLayout) 
-    {
-        this.drivetrainSubsystem = drivetrainSubsystem;
-        this.limelightSubsystem = limelightSubsystems;
-        this.visionLayout = visionLayout;
+    private SlewRateLimiter dsratelimiter = new SlewRateLimiter(4);
 
-        addRequirements(drivetrainSubsystem);
+    private double DRIVE_MULT = 1.0;
+    private final double SLOWMODE_MULT = 0.55;
+
+    public ChaseAprilTagCommand(
+        SwerveSubsystem swerveSubsystem,
+        ShuffleboardLayout visionLayout,
+        XboxController xbox) 
+    {
+        this.swerveSubsystem = swerveSubsystem;
+        this.visionLayout = visionLayout;
+        this.xbox = xbox;
+
+        dsratelimiter.reset(SLOWMODE_MULT);
+
+        addRequirements(swerveSubsystem);
   }
 
   @Override
@@ -65,6 +66,7 @@ public class AprilTagFollowCommand extends CommandBase {
   //Need help here does not know how to move robot using limelight co-ordinates
   @Override
   public void execute() {
+    ChassisSpeeds speeds;
     // If the target is visible, get the new translation. If the target isn't visible we'll use the last known translation.
     LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults((LimelightConstants.limeLightName));
    //System.out.println("I am inside april tag command execute");
@@ -75,24 +77,40 @@ public class AprilTagFollowCommand extends CommandBase {
       visionLayout.add("Target Z", pose.getZ());
       
       var xSpeed = pidControllerX.calculate(pose.getX());
+      xSpeed *= DriveConstants.XY_SPEED_LIMIT * DriveConstants.MAX_ROBOT_VELOCITY;
       if (pidControllerX.atSetpoint()) {
         xSpeed = 0;
       }
 
          // Handle alignment side-to-side
       var ySpeed = pidControllerY.calculate(pose.getY());
+      ySpeed *= DriveConstants.XY_SPEED_LIMIT * DriveConstants.MAX_ROBOT_VELOCITY;
       if (pidControllerY.atSetpoint()) {
         ySpeed = 0;
       }
 
       // Handle rotation using target Yaw/Z rotation
       var omegaSpeed = pidControllerOmega.calculate(pose.getZ());
+      omegaSpeed *= DriveConstants.Z_SPEED_LIMIT * DriveConstants.MAX_ROBOT_RAD_VELOCITY;
       if (pidControllerOmega.atSetpoint()) {
         omegaSpeed = 0;
       }
+
+      double dmult = dsratelimiter
+                .calculate((DRIVE_MULT - SLOWMODE_MULT) * xbox.getRightTriggerAxis() + SLOWMODE_MULT);
+        xSpeed *= dmult;
+        ySpeed *= dmult;
+        omegaSpeed *= dmult;
+
+        // Drive Non Field Oriented
+        if (!xbox.getLeftBumper()) {
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omegaSpeed, swerveSubsystem.getRotation2d());
+        } else {
+            speeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
+        }
       
-      SwerveModuleState[] calculatedModuleStates = DrivetrainConstants.KINEMATICS.toSwerveModuleStates(new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed));
-      drivetrainSubsystem.setModules(calculatedModuleStates);
+      SwerveModuleState[] calculatedModuleStates = DriveConstants.KINEMATICS.toSwerveModuleStates(speeds);
+      swerveSubsystem.setModules(calculatedModuleStates);
     }
   }
 
@@ -113,7 +131,7 @@ public class AprilTagFollowCommand extends CommandBase {
 
   @Override
   public void end(boolean interrupted) {
-    drivetrainSubsystem.stopDrive();
+    swerveSubsystem.stopDrive();
   }
-    
+  
 }

@@ -2,42 +2,36 @@ package frc.robot.subsystems;
 
 import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.SwerveModuleConstants;
-import frc.swerve.SwerveModule;
+import frc.robot.Constants.*;
 
-public class DrivetrainSubsystem extends SubsystemBase {
+public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule frontLeft = new SwerveModule(SwerveModuleConstants.FL_STEER_ID, SwerveModuleConstants.FL_DRIVE_ID,
-            SwerveModuleConstants.FL_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.FL_OFFSET_ROTATIONS,
-            SwerveModuleConstants.FL_ABSOLUTE_ENCODER_REVERSED,
-            SwerveModuleConstants.FL_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.FL_STEER_MOTOR_REVERSED);
+    SwerveModuleConstants.FL_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.FL_OFFSET_ROTATIONS,
+    SwerveModuleConstants.FL_ABSOLUTE_ENCODER_REVERSED,
+    SwerveModuleConstants.FL_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.FL_STEER_MOTOR_REVERSED);
 
     private final SwerveModule frontRight = new SwerveModule(SwerveModuleConstants.FR_STEER_ID, SwerveModuleConstants.FR_DRIVE_ID,
-            SwerveModuleConstants.FR_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.FR_OFFSET_ROTATIONS,
-            SwerveModuleConstants.FR_ABSOLUTE_ENCODER_REVERSED,
-            SwerveModuleConstants.FR_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.FR_STEER_MOTOR_REVERSED);
+        SwerveModuleConstants.FR_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.FR_OFFSET_ROTATIONS,
+        SwerveModuleConstants.FR_ABSOLUTE_ENCODER_REVERSED,
+        SwerveModuleConstants.FR_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.FR_STEER_MOTOR_REVERSED);
 
     private final SwerveModule backRight = new SwerveModule(SwerveModuleConstants.BR_STEER_ID, SwerveModuleConstants.BR_DRIVE_ID,
-            SwerveModuleConstants.BR_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.BR_OFFSET_ROTATIONS,
-            SwerveModuleConstants.BR_ABSOLUTE_ENCODER_REVERSED,
-            SwerveModuleConstants.BR_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.BR_STEER_MOTOR_REVERSED);
+        SwerveModuleConstants.BR_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.BR_OFFSET_ROTATIONS,
+        SwerveModuleConstants.BR_ABSOLUTE_ENCODER_REVERSED,
+        SwerveModuleConstants.BR_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.BR_STEER_MOTOR_REVERSED);
 
     private final SwerveModule backLeft = new SwerveModule(SwerveModuleConstants.BL_STEER_ID, SwerveModuleConstants.BL_DRIVE_ID,
-            SwerveModuleConstants.BL_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.BL_OFFSET_ROTATIONS,
-            SwerveModuleConstants.BL_ABSOLUTE_ENCODER_REVERSED,
-            SwerveModuleConstants.BL_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.BL_STEER_MOTOR_REVERSED);
+        SwerveModuleConstants.BL_ABSOLUTE_ENCODER_PORT, SwerveModuleConstants.BL_OFFSET_ROTATIONS,
+        SwerveModuleConstants.BL_ABSOLUTE_ENCODER_REVERSED,
+        SwerveModuleConstants.BL_DRIVE_MOTOR_REVERSED, SwerveModuleConstants.BL_STEER_MOTOR_REVERSED);
 
     private final AHRS navX = new AHRS(SPI.Port.kMXP);
 
@@ -46,7 +40,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(DriveConstants.KINEMATICS, getRotation2d(),
             getModulePositions());
 
-    public DrivetrainSubsystem() {
+    public SwerveSubsystem() {
         zeroHeading();
         // new Thread(() -> {
         // try {
@@ -119,8 +113,18 @@ public class DrivetrainSubsystem extends SubsystemBase {
         frontLeft.setModuleState(states[3]);
     }
 
+    public void setChassisSpeedsAUTO(ChassisSpeeds speeds) {
+        double tmp = -speeds.vxMetersPerSecond;
+        speeds.vxMetersPerSecond = -speeds.vyMetersPerSecond;
+        speeds.vyMetersPerSecond = tmp; // FORWARDS
+        // SmartDashboard.putNumber("Radians Chassis CMD",
+        // speeds.omegaRadiansPerSecond);
+        SwerveModuleState[] states = DriveConstants.KINEMATICS.toSwerveModuleStates(speeds);
+        setModules(states);
+    }
+
     public void setXstance() {
-        frontLeft.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        frontLeft.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         frontRight.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         backLeft.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         backRight.setModuleStateRaw(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));

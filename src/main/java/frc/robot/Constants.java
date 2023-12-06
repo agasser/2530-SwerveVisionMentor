@@ -4,29 +4,37 @@
 
 package frc.robot;
 
+import org.opencv.core.Mat;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 /**
- * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
- * constants. This class should not be used for any other purpose. All constants should be declared
+ * The Constants class provides a convenient place for teams to hold robot-wide
+ * numerical or boolean
+ * constants. This class should not be used for any other purpose. All constants
+ * should be declared
  * globally (i.e. public static). Do not put anything functional in this class.
  *
- * <p>It is advised to statically import this class (or one of its inner classes) wherever the
+ * <p>
+ * It is advised to statically import this class (or one of its inner classes)
+ * wherever the
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-
   public static class ControllerConstants {
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 2;
   }
 
-  public static final class DrivetrainConstants {
+  public static class SwerveModuleConstants {
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);
     public static final double STEERING_GEAR_RATIO = (14.0 / 50.0) * (10.0 / 60.0);
     public static final double DRIVE_GEAR_RATIO = 1.d / 6.75d;
@@ -39,7 +47,7 @@ public final class Constants {
     // public static final double MODULE_KD = 0.03;
 
     // NOTE: This may need additional tuning!
-    public static final double MODULE_KP = 0.75628;// 0.7491; //0.56368;
+    public static final double MODULE_KP = 1.7; //.756 // 0.7491;  //0.56368;
     public static final double MODULE_KD = 0.0066806;// 0.0057682; //0.0076954;
 
     // --------- Front Left Module --------- \\
@@ -77,7 +85,9 @@ public final class Constants {
     public static final boolean BL_ABSOLUTE_ENCODER_REVERSED = false;
     public static final boolean BL_DRIVE_MOTOR_REVERSED = true;
     public static final boolean BL_STEER_MOTOR_REVERSED = true;
+  }
 
+  public static class DriveConstants {
     public static final double MAX_MODULE_VELOCITY = 4.8;
     public static final double MAX_ROBOT_VELOCITY = 4.8;
     public static final double MAX_ROBOT_RAD_VELOCITY = 12.0; // Approx. Measured rads/sec
@@ -90,38 +100,65 @@ public final class Constants {
         new Translation2d(-TRACK_WIDTH / 2.0, -WHEEL_BASE / 2.0), // Back Right
         new Translation2d(TRACK_WIDTH / 2.0, -WHEEL_BASE / 2.0), // Front Right
         new Translation2d(-TRACK_WIDTH / 2.0, WHEEL_BASE / 2.0), // Back Left
-        new Translation2d(TRACK_WIDTH / 2.0, WHEEL_BASE / 2.0)); // Front left
+        new Translation2d(TRACK_WIDTH / 2.0, WHEEL_BASE / 2.0)); // Front Left
 
     public static final double XY_SPEED_LIMIT = 0.8;
     public static final double Z_SPEED_LIMIT = 1.0;
   }
 
-  public static class OperatorConstants {
-    public static final int kDriverControllerPort = 0;
+  public static class IntakeConstants {
+    // Intake ports
+    public static final int WHEEL_LEFT_PORT = 9;
+    public static final int WHEEL_RIGHT_PORT = 10;
+    public static final int INTAKE_CURRENT_LIMIT = 40;
+
+    public static final int ACTUATOR_MOTOR_PORT = 11;
+    public static final int ACTUATOR_ENCODER_PORT = 5;
+    // CANcoder #5 reading when intake is vertical
+    public static final double OFFSET_RADIANS = Units.degreesToRadians(102.0);
+    public static final double ACTUATOR_GEAR_RATIO = (30.f/28.f);
+
+    public static final double MAX_SPEED = 0.50;
   }
 
   public static class LimelightConstants {
     public static final String limeLightName = "limelight";
-    // how many degrees back is your limelight rotated from perfectly vertical? (a1)
-    public static final double limelightMountAngleDegrees = 25.0;
-    // distance from the center of the Limelight lens to the floor in inches (h2)
-    public static final double limelightLensHeightInches = 20.0;
-    // distance from the target to the floor in inches (h1)
-    public static final double aprilTagGoalHeightInches = 60.0;
-
-
+    public static final Transform3d robotToCamera = new Transform3d(
+    new Translation3d(0.06, -0.2, 0.2127),
+    new Rotation3d(0.0, Units.degreesToRadians(-15.0), Units.degreesToRadians(3.0)));
   }
 
   public static class VisionConstants {
 
-    /**
-     * Physical location of the camera on the robot, relative to the center of the robot.
-     */
-    public static final Transform3d CAMERA_TO_ROBOT =
-        new Transform3d(new Translation3d(0, 0.0, 0), new Rotation3d());
-    public static final Transform3d ROBOT_TO_CAMERA = CAMERA_TO_ROBOT.inverse();
-     /** Height of the camers in meters */
-    public static final double CAMERA_HEIGHT = 0.165;
-  }
+    public static final double FIELD_LENGTH_METERS = 16.54175;
+    public static final double FIELD_WIDTH_METERS = 8.0137;
+    
+    // Pose on the opposite side of the field. Use with `relativeTo` to flip a pose to the opposite alliance
+    public static final Pose2d FLIPPING_POSE = new Pose2d(
+        new Translation2d(FIELD_LENGTH_METERS, FIELD_WIDTH_METERS),
+        new Rotation2d(Math.PI));
 
+    /** Minimum target ambiguity. Targets with higher ambiguity will be discarded */
+    public static final double APRILTAG_AMBIGUITY_THRESHOLD = 0.2;
+  }
+  
+  public static class AutoConstants {
+    public static final double PATH_THETA_kP = 2.6;
+    public static final double PATH_THETA_kI = 0.001;
+    public static final double PATH_THETA_kD = 0.0;
+
+    public static final TrapezoidProfile.Constraints THETA_CONSTRAINTS = new TrapezoidProfile.Constraints(Math.PI, 2 / Math.PI);
+    public static final double THETA_kP = 0.5;
+    public static final double THETA_kI = 0.0;
+    public static final double THETA_kD = 0.0;
+
+    public static final double X_kP = 1.0;
+    public static final double X_kI = 0.0;
+    public static final double X_kD = 0.0;
+
+    public static final double Y_kP = 1.5;
+    public static final double Y_kI = 0.0;
+    public static final double Y_kD = 0.0;
+  }
+  
 }
