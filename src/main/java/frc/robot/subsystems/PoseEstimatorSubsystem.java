@@ -109,14 +109,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     var poseEntry = LimelightHelpers.getLimelightNTTableEntry("limelight", "botpose_wpiblue");
     var poseArray = poseEntry.getDoubleArray(new double[0]);
-    var timestamp = poseEntry.getLastChange() / 1e6 - poseArray[6] / 1e3;
+    if(poseArray.length > 0){
+      var timestamp = poseEntry.getLastChange() / 1e6 - poseArray[6] / 1e3;
 
-    var pose = new Pose2d(
-        new Translation2d(poseArray[0], poseArray[1]),
-        new Rotation2d(Units.degreesToRadians(poseArray[5])));
+      var pose = new Pose2d(
+          new Translation2d(poseArray[0], poseArray[1]),
+          new Rotation2d(Units.degreesToRadians(poseArray[5])));
 
-    poseEstimator.addVisionMeasurement(pose, timestamp);
-
+      poseEstimator.addVisionMeasurement(pose, timestamp);
+    }
     // Set the pose on the dashboard
     var dashboardPose = poseEstimator.getEstimatedPosition();
     if (originPosition == kRedAllianceWallRightSide) {

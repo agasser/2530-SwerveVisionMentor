@@ -91,7 +91,7 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout, driverXbox.getHID()));
+    driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout));
     driverXbox.x().onTrue(Commands.runOnce(() -> zeroHeading()));
     driverXbox.a().onTrue(Commands.runOnce(() -> poseEstimator.setCurrentPose(new Pose2d()), swerveDriveSubsystem));
     driverXbox.b().whileTrue(Commands.run(swerveDriveSubsystem::setXstance, swerveDriveSubsystem));
