@@ -30,7 +30,6 @@ public class OperatorCommand extends CommandBase {
             boolean intakeIn = (intake.getIntakeState() == IntakeState.STOWED) || (intake
                     .getIntakeState() == IntakeState.PICKUP);
             intake.setIntakeSpeed(xbox.getLeftTriggerAxis() * (intakeIn ? -1 : 1) - 0.2);
-            System.out.println("OPcmd working");
 
             // Set intake state based on the xbox POV
             switch (xbox.getPOV()) {

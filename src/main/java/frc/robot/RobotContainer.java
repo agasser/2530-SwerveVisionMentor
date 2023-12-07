@@ -18,7 +18,6 @@ import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
@@ -91,7 +90,7 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout, driverXbox.getHID()));
+    driverXbox.y().whileTrue(new ChaseAprilTagCommand(swerveDriveSubsystem, visionLayout));
     driverXbox.x().onTrue(Commands.runOnce(() -> zeroHeading()));
     driverXbox.a().onTrue(Commands.runOnce(() -> poseEstimator.setCurrentPose(new Pose2d()), swerveDriveSubsystem));
     driverXbox.b().whileTrue(Commands.run(swerveDriveSubsystem::setXstance, swerveDriveSubsystem));
